@@ -1,0 +1,2 @@
+- kann man über Graph Explorer todolist items programmatisch abfragen?
+- delegated auth flow probieren
