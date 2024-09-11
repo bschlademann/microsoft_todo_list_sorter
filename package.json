@@ -15,6 +15,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@microsoft/microsoft-graph-types": "^2.40.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.14.2",
     "tsx": "^4.11.2",

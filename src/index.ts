@@ -1,8 +1,7 @@
 import { Client } from "@microsoft/microsoft-graph-client";
-import { ClientSecretCredential } from "@azure/identity";
+import { ClientSecretCredential, DeviceCodeCredential } from "@azure/identity";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import * as dotenv from "dotenv";
-import { log } from "console";
 import { z } from "zod";
 
 const envSchema = z.object({
@@ -16,36 +15,40 @@ const main = async () => {
   dotenv.config();
 
   const config = envSchema.parse(process.env);
+  console.log(config);
 
   // @azure/identity
-  const credential = new ClientSecretCredential(
-    config.AZURE_TENANT_ID,
-    config.AZURE_APP_ID,
-    config.AZURE_AUTH_SECRET
-  );
+  // const credential = new ClientSecretCredential(
+  //   config.AZURE_TENANT_ID,
+  //   config.AZURE_APP_ID,
+  //   config.AZURE_AUTH_SECRET
+  // );
+
+  const credential = new DeviceCodeCredential({
+    clientId: config.AZURE_APP_ID,
+    tenantId: config.AZURE_TENANT_ID,
+    userPromptCallback: console.log,
+  });
+
+  // get auth token
+  const token = await credential.getToken(["offline_access", "User.Read"]);
+  // console.log(token);
 
   // @microsoft/microsoft-graph-client/authProviders/azureTokenCredentials
   const authProvider = new TokenCredentialAuthenticationProvider(credential, {
-    // The client credentials flow requires that you request the
-    // /.default scope, and pre-configure your permissions on the
-    // app registration in Azure. An administrator must grant consent
-    // to those permissions beforehand.
-    scopes: ["https://graph.microsoft.com/.default"],
+    scopes: ["offline_access", "User.Read", "Tasks.ReadWrite"],
   });
+
+  // replace authProvider with another one that caches the token / uses the refreshtoken to automatically get new tokens
 
   const graphClient = Client.initWithMiddleware({ authProvider: authProvider });
 
-  const baseURL = "https://graph.microsoft.com/v1.0";
-  //   const userId = "krikelkr4kel_gmail.com#EXT#@krikelkr4kelgmail.onmicrosoft.com";
-  const userId = "be8f005e-f2d2-4d0c-88a5-7cf452153413";
+  const taskListId =
+    "AQMkADAwATM3ZmYAZS1lZQA2MC04NjM0LTAwAi0wMAoALgAAAyVIhJQRxJVPi0-75UZXF38BANpnlmN9-SNJrDJThYJa9skAAAGcOY8AAAA=";
+
   const response = await graphClient
-    .api(`${baseURL}/users/${userId}`)
+    .api(`/me/todo/lists/${taskListId}/tasks`)
     .get();
-  log(response);
-
-  // await graphClient.api(`${baseURL}/users/${userId}/todo/lists`).post({
-  //     displayName: 'Travel items'
-  //   })
+  console.log(response);
 };
-
 main();
